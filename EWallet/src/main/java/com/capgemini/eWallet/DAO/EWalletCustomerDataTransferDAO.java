@@ -36,9 +36,9 @@ public class EWalletCustomerDataTransferDAO implements IEWalletCustomerDataDao{
 		Integer accountNumber = getAccountNumber(customer);
 		customer.setAccountNumber(accountNumber);
 		set.put(customerID, customer);
-		System.out.println();
+		/*System.out.println();
 		System.out.println(set);
-		System.out.println();
+		System.out.println();*/
 		return customerID;
 	}
 	

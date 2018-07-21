@@ -17,42 +17,60 @@ public class EWalletCustomerDataTransferJPA implements IEWalletCustomerDataDao{
 	EntityManagerFactory factory = Persistence.createEntityManagerFactory("JPA-PU");
 	EntityManager em = factory.createEntityManager();
 	
+	int max = 99999;
+	int min = 10000;
+	int range = max - min + 1;
+	int maxAcc = 99999999;
+	int minAcc = 10000000;
+	int rangeAcc = maxAcc - minAcc +1;
 	
 	@Override
 	public String addCustomerDetails(CustomerAccountClass customer) {
 		em.getTransaction().begin();
 		CustomerAccountClass ref = null;
-		customer.setCustomerID("hello");
+		customer.setCustomerID(getCustomerID(customer));
 		
-		em.persist(customer);
-		em.getTransaction().commit();
-		em.close();
-		factory.close();
-		return null;
+		em.merge(customer);
+		
+		return customer.getCustomerID();
+		
 	}
 
 	@Override
 	public String getCustomerID(CustomerAccountClass customer) {
-		// TODO Auto-generated method stub
-		return null;
+		Integer customerID = (int)(Math.random() * range) + min;
+		String customerIDString = customerID.toString();
+		StringBuffer customerIDStringBuffer = new StringBuffer();
+		customerIDStringBuffer.append(customer.getCountry().substring(0,2).toUpperCase());
+		customerIDStringBuffer.append(customer.getState().substring(0,2).toUpperCase());
+		customerIDStringBuffer.append(customer.getCity().substring(0,2).toUpperCase());
+		customerIDStringBuffer.append(customerID.toString());
+		customerIDString = customerIDStringBuffer.toString();
+		return customerIDString;
 	}
 
 	@Override
 	public void writeToFile() throws IOException {
-		// TODO Auto-generated method stub
+		em.getTransaction().commit();
+		em.close();
+		factory.close();
 		
 	}
 
 	@Override
 	public CustomerAccountClass getCustomerAccountClass(String customerID)
 			throws EWalletException {
-		// TODO Auto-generated method stub
-		return null;
+		CustomerAccountClass customer = em.find(CustomerAccountClass.class, customerID);
+		if(customer == null) {
+			throw new EWalletException("There is no account linked to this customer");
+		}
+		em.remove(customer);
+		return customer;
 	}
 
 	@Override
 	public void readFromFile() {
-		// TODO Auto-generated method stub
+		
 		
 	}
 
@@ -64,7 +82,9 @@ public class EWalletCustomerDataTransferJPA implements IEWalletCustomerDataDao{
 
 	@Override
 	public boolean customerAvailable(String customerID) {
-		// TODO Auto-generated method stub
+		em.getTransaction().begin();
+		CustomerAccountClass temp = em.find(CustomerAccountClass.class, customerID);
+		if(temp !=  null)return true;
 		return false;
 	}
 
@@ -76,8 +96,8 @@ public class EWalletCustomerDataTransferJPA implements IEWalletCustomerDataDao{
 
 	@Override
 	public Integer getAccountNumber(CustomerAccountClass customer) {
-		// TODO Auto-generated method stub
-		return null;
+		Integer accNo = (int)(Math.random() * rangeAcc) + minAcc;
+		return accNo;
 	}
 	
 }
