@@ -2,11 +2,15 @@ package com.capgemini.eWallet.DAO;
 
 import java.io.IOException;
 import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
+import javax.persistence.Query;
 
 import com.capgemini.eWallet.Exception.EWalletException;
 import com.capgemini.eWallet.beans.CustomerAccountClass;
@@ -16,6 +20,7 @@ public class EWalletCustomerDataTransferJPA implements IEWalletCustomerDataDao{
 
 	EntityManagerFactory factory = Persistence.createEntityManagerFactory("JPA-PU");
 	EntityManager em = factory.createEntityManager();
+	static HashMap<String, CustomerAccountClass> set = new HashMap();
 	
 	int max = 99999;
 	int min = 10000;
@@ -29,9 +34,9 @@ public class EWalletCustomerDataTransferJPA implements IEWalletCustomerDataDao{
 		em.getTransaction().begin();
 		CustomerAccountClass ref = null;
 		customer.setCustomerID(getCustomerID(customer));
-		
+		customer.setAccountNumber(getAccountNumber(customer));
 		em.merge(customer);
-		
+		em.getTransaction().commit();
 		return customer.getCustomerID();
 		
 	}
@@ -58,20 +63,30 @@ public class EWalletCustomerDataTransferJPA implements IEWalletCustomerDataDao{
 	}
 
 	@Override
-	public CustomerAccountClass getCustomerAccountClass(String customerID)
+	public CustomerAccountClass getCustomerAccountClass(String customerId)
 			throws EWalletException {
-		CustomerAccountClass customer = em.find(CustomerAccountClass.class, customerID);
+		//CustomerAccountClass customer = em.find(CustomerAccountClass.class, customerID);
+		Query qry = em.createQuery("SELECT c FROM CustomerAccountClass c WHERE c.customerID =:customerId1", CustomerAccountClass.class);
+		qry.setParameter("customerId1", customerId);
+		
+		CustomerAccountClass customer = (CustomerAccountClass) qry.getSingleResult();
 		if(customer == null) {
 			throw new EWalletException("There is no account linked to this customer");
 		}
-		em.remove(customer);
 		return customer;
 	}
 
 	@Override
 	public void readFromFile() {
-		
-		
+		List customerList = new ArrayList();
+		Query qry = em.createQuery("SELECT c FROM CustomerAccountClass c", CustomerAccountClass.class);
+		customerList = qry.getResultList();
+		Iterator itr = customerList.iterator();
+		CustomerAccountClass ref = new CustomerAccountClass();
+		while(itr.hasNext()) {
+			ref = (CustomerAccountClass) itr.next();
+			set.put(ref.getCustomerID(), ref);
+		}
 	}
 
 	@Override
@@ -90,8 +105,9 @@ public class EWalletCustomerDataTransferJPA implements IEWalletCustomerDataDao{
 
 	@Override
 	public void updateSetFile(String customerID, CustomerAccountClass temp) {
-		// TODO Auto-generated method stub
-		
+		em.getTransaction().begin();
+		em.merge(temp);
+		em.getTransaction().commit();
 	}
 
 	@Override
